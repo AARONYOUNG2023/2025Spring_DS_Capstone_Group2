@@ -32,6 +32,9 @@ In the Data Science Capstone, the part of this dataset may be used based on the 
    - Reduces the number of trainable parameters while maintaining performance.  
    - Allows efficient adaptation of large models with limited computational resources.
 
+![img.png](img.png)
+![img_1.png](img_1.png)
+
 ## Checklist
 
  - [ ] Dataset Permit
