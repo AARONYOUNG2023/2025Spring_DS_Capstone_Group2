@@ -15,7 +15,22 @@ In the Data Science Capstone, the part of this dataset may be used based on the 
 
 ## Data Processing
 
+## Proposed Multi-Model Architecture 
+1. **ChexNet for Multi-Label Classification**  
+   - Extracts core pathologies (e.g., pneumonia, cardiomegaly) from X-ray images using DenseNet-121.  
+   - Offers a structured set of labels to ground subsequent text generation in real clinical findings.
 
+2. **Vision-Language Model**  
+   - Options include BioViLT, BLIP2, or CXRMATE.  
+   - Fuses the X-ray image features and ChexNet labels, then generates or refines an initial descriptive report.
+
+3. **Biomedical Language Model (BioGPT)**  
+   - Receives intermediate text or embeddings, refining the final report’s fluency and coherence.  
+   - Integrates domain-specific phrasing and medical knowledge.  
+
+4. **Parameter-Efficient Fine-Tuning (PEFT) and LoRA**  
+   - Reduces the number of trainable parameters while maintaining performance.  
+   - Allows efficient adaptation of large models with limited computational resources.
 
 ## Checklist
 
