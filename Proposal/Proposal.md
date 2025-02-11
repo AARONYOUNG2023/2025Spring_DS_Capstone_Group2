@@ -15,7 +15,7 @@ In the Data Science Capstone, the part of this dataset may be used based on the 
 
 ## Data Processing
 
-## Proposed Multi-Model Architecture 
+## Proposed Multi-Model Architecture 1
 1. **ChexNet for Multi-Label Classification**  
    - Extracts core pathologies (e.g., pneumonia, cardiomegaly) from X-ray images using DenseNet-121.  
    - Offers a structured set of labels to ground subsequent text generation in real clinical findings.
@@ -34,6 +34,14 @@ In the Data Science Capstone, the part of this dataset may be used based on the 
 
 ![img.png](img.png)
 ![img_1.png](img_1.png)
+
+## Proposed Multi-Model Architecture 2
+
+First, I feed X-ray images into a specialized pre-trained encoder, such as a CNN or Vision Transformer fine-tuned on chest X-ray data. This step helps extract relevant radiological features from each image, capturing any clinically significant patterns.  
+
+Next, I use a text-generation module, often a Transformer decoder, to take these image embeddings and generate a concise report describing the findings. It can determine whether the scan is normal or identify potential abnormalities like lung opacities. By fine-tuning on medical image-text datasets like MIMIC-CXR, I ensure the generated text follows domain-specific language and improves accuracy.  
+
+Finally, I pass the generated textual findings into a large language model (e.g., GPT through the OpenAI API) to interpret these observations and suggest possible diagnoses or further clinical insights. By separating image analysis from textual reasoning, I leverage specialized vision models for accurate feature extraction while using large language models for robust interpretation, forming a cohesive and efficient end-to-end system.
 
 ## Checklist
 
