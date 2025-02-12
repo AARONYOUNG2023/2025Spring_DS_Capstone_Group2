@@ -66,6 +66,12 @@ Finally, I pass the generated textual findings into a large language model (e.g.
 A **g2.2xlarge** instance on AWS will serve as the primary machine for this project. This instance is expected to provide a balance of GPU capabilities for model training and sufficient storage for data processing.
 ### Software 
 
+1. Pytorch
+2. Streamlit
+3. Tensorflow
+4. 
+
+
 ## Metrics
 
 1. Language Quality (NLG Metrics)
