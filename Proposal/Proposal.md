@@ -50,7 +50,7 @@ Finally, I pass the generated textual findings into a large language model (e.g.
  - [ ] Dataset Preprocessing
  - [ ] Dataset Info Checking
  - [ ] Dataset Pixel Adjusted
- - [ ]  Package Version Selection
+ - [ ] Package Version Selection
  - [ ] Model Selection
  - [ ] Model Comparison
  - [ ] Pre-trained Model
@@ -64,6 +64,7 @@ Finally, I pass the generated textual findings into a large language model (e.g.
 
 ## Computational Resources
 A **g2.2xlarge** instance on AWS will serve as the primary machine for this project. This instance is expected to provide a balance of GPU capabilities for model training and sufficient storage for data processing.
+### Software 
 
 ## Metrics
 
