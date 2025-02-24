@@ -103,7 +103,6 @@ def build_master_dataframe(xml_rows, images_folder, vocab_map):
         findings_mapped = apply_vocabulary_mapping(row['findings'], vocab_map)
         impression_mapped = apply_vocabulary_mapping(row['impression'], vocab_map)
         all_entries.append({
-            'report_id': row['report_id'],
             'image_id': img_id,
             'image_path': image_path,
             'findings': findings_mapped,
@@ -141,7 +140,6 @@ class NLMChestXRayDataset(Dataset):
         findings_text = row['findings'] if pd.notnull(row['findings']) else ""
         impression_text = row['impression'] if pd.notnull(row['impression']) else ""
         return {
-            "report_id": row['report_id'],
             "image_id": row['image_id'],
             "image": image,
             "findings": findings_text,
@@ -158,6 +156,7 @@ def get_transforms():
         )
     ])
 
+#%%
 # ===========================================================================================
 #  Part 4: Main Script
 # ===========================================================================================
@@ -171,7 +170,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     xml_rows = parse_xml_reports(args.xml_dir)
-    vocab_map = read_vocabulary(args.vocab_path)
+    vocab_map = read_vocabulary_synonyms(args.vocab_path)
     df_master = build_master_dataframe(xml_rows, args.images_folder, vocab_map)
     df_master.to_csv("master_dataset.csv", index=False)
 
@@ -181,7 +180,6 @@ if __name__ == "__main__":
 
     for batch_idx, batch_data in enumerate(dataloader):
         print(f"Batch {batch_idx}:")
-        print(" - report_ids:", batch_data["report_id"])
         print(" - image_ids:", batch_data["image_id"])
         print(" - image batch shape:", batch_data["image"].shape)
         print(" - sample findings text:", batch_data["findings"][0])
