@@ -13,14 +13,16 @@ import os
 import pandas as pd
 import xml.etree.ElementTree as ET
 
+
 def parse_single_xml(xml_file):
     tree = ET.parse(xml_file)
     root = tree.getroot()
     rows = []
 
     findings_el = root.find('.//AbstractText[@Label="FINDINGS"]')
-    impression_el = root.find('.//AbstractText[@Label="IMPRESSION"]')
     findings_text = findings_el.text.strip() if findings_el is not None and findings_el.text else ""
+
+    impression_el = root.find('.//AbstractText[@Label="IMPRESSION"]')
     impression_text = impression_el.text.strip() if impression_el is not None and impression_el.text else ""
 
     parent_image_els = root.findall('.//parentImage')
@@ -41,62 +43,21 @@ def parse_single_xml(xml_file):
                 'findings': findings_text,
                 'impression': impression_text
             })
+
     return rows
 
+def parse_xml_reports(xml_dir):
+    all_rows = []
+    for fname in os.listdir(xml_dir):
+        if fname.endswith(".xml"):
+            path = os.path.join(xml_dir, fname)
+            all_rows.extend(parse_single_xml(path))
+    return all_rows
 
-# ================================================================================================
-# should be verified
-# ================================================================================================
-# import os
-# import pandas as pd
-# import xml.etree.ElementTree as ET
-#
-# def parse_single_xml(xml_file):
-#     tree = ET.parse(xml_file)
-#     root = tree.getroot()
-#     rows = []
-#     for report_el in root.findall('report'):
-#         report_id = report_el.get('id', '')
-#         findings_el = report_el.find('findings')
-#         impression_el = report_el.find('impression')
-#         findings_text = findings_el.text.strip() if findings_el is not None else ""
-#         impression_text = impression_el.text.strip() if impression_el is not None else ""
-#         images_el = report_el.find('images')
-#         if images_el:
-#             image_els = images_el.findall('image')
-#             if len(image_els) == 0:
-#                 rows.append({
-#                     'report_id': report_id,
-#                     'image_id': None,
-#                     'findings': findings_text,
-#                     'impression': impression_text
-#                 })
-#             else:
-#                 for img in image_els:
-#                     image_id = img.text.strip()
-#                     rows.append({
-#                         'report_id': report_id,
-#                         'image_id': image_id,
-#                         'findings': findings_text,
-#                         'impression': impression_text
-#                     })
-#         else:
-#             rows.append({
-#                 'report_id': report_id,
-#                 'image_id': None,
-#                 'findings': findings_text,
-#                 'impression': impression_text
-#             })
-#     return rows
-#
-# def parse_xml_reports(xml_dir):
-#     all_rows = []
-#     for fname in os.listdir(xml_dir):
-#         if fname.endswith(".xml"):
-#             path = os.path.join(xml_dir, fname)
-#             all_rows.extend(parse_single_xml(path))
-#     return all_rows
 
+# ---------------------------------------------------------------------------------------------------------------------
+# The below block code is to read the vocab from the document 'radiology_vocabulary_final.csv'
+# ---------------------------------------------------------------------------------------------------------------------
 def read_vocabulary_synonyms(xlsx_path):
     """
     Reads all columns named 'Term', 'Synonym', 'Synonym...' etc. from the Excel file.
@@ -150,6 +111,8 @@ def build_master_dataframe(xml_rows, images_folder, vocab_map):
         })
     return pd.DataFrame(all_entries)
 
+
+#%%
 # ===========================================================================================
 #  Part 3: Creating PyTorch Dataset
 # ===========================================================================================
