@@ -13,14 +13,8 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 import pandas as pd
-
-# Local imports from the two modules we created:
 from image_encoder import DensenetImageEncoder
 from clinical_bert_decoder import ClinicalBertDecoder
-
-# Optionally, you can reuse your transforms from your data preprocessing script
-# from data_preprocessing import NLMChestXRayDataset, get_transforms   # Example
-
 
 class ChestXRayReportGenerator(nn.Module):
     """
@@ -79,8 +73,7 @@ class ChestXRayReportGenerator(nn.Module):
         :param num_mask_tokens: how many tokens to attempt to fill
         :return: generated text as a string
         """
-        # Assume a batch of size 1 for simplicity
-        image_embeds = self.image_encoder(images)  # (1, image_feature_dim)
+        image_embeds = self.image_encoder(images)
         generated = self.text_decoder.generate(
             image_embeds=image_embeds,
             prompt_text=prompt_text,
@@ -101,13 +94,6 @@ def main():
     csv_path = r"C:\Users\yangy\PycharmProjects\2025Spring_DS_Capstone_Group2\data\processed\master_dataset.csv"
     df = pd.read_csv(csv_path)
 
-    # Suppose you have a custom dataset & transforms from your data preprocessing script
-    # from your_data_script import NLMChestXRayDataset, get_transforms
-    # transform = get_transforms()
-    # dataset = NLMChestXRayDataset(df, transform=transform)
-
-    # For demonstration, we won't import your entire data preprocessing again;
-    # We'll just show a pseudo-code approach:
     from torch.utils.data import Dataset
     from PIL import Image
     import torchvision.transforms as transforms
@@ -163,17 +149,11 @@ def main():
     for batch in data_loader:
         images = batch["image"].to(device)  # (batch_size, 3, 224, 224)
         texts = batch["text"]
-
-        # Tokenize texts
         encoding = tokenizer(texts, padding=True, truncation=True, return_tensors="pt")
         input_ids = encoding["input_ids"].to(device)
         attention_mask = encoding["attention_mask"].to(device)
-
-        # Optionally, build MLM labels (you would normally do random masking)
-        # For a simple demonstration, let's keep the labels the same as input_ids:
         labels = input_ids.clone()
 
-        # Forward pass
         outputs = model(
             images=images,
             input_ids=input_ids,
@@ -189,7 +169,6 @@ def main():
     # -------------------------------------------------------------------------
     # 5) Demonstrate generation (batch_size=1 usage)
     # -------------------------------------------------------------------------
-    # Just take the first sample from the DataLoader for generation
     single_sample = dataset[0]
     single_image = single_sample["image"].unsqueeze(0).to(device)
     prompt_text = "The chest X-ray reveals"
