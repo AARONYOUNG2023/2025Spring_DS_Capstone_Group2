@@ -56,20 +56,22 @@ class ClinicalBertDecoder(nn.Module):
         batch_size = image_embeds.size(0)
         projected_img = self.visual_token_proj(image_embeds)
         visual_token = projected_img.unsqueeze(1)
-        bert_embeddings = self.bert_mlm.bert.embeddings.word_embeddings
-        token_embeds = bert_embeddings(input_ids)  # (batch_size, seq_len, hidden_dim)
-        combined_embeds = torch.cat([visual_token, token_embeds], dim=1)  # (batch_size, seq_len+1, hidden_dim)
+        bert_embeddings = self.bert_mlm.get_input_embeddings()
+
+        token_embeds = self.bert_mlm.get_input_embeddings()(input_ids)
+        combined_embeds = torch.cat([visual_token, token_embeds], dim=1)
+        # (batch_size, seq_len+1, hidden_dim)
         expanded_mask = torch.cat([
             torch.ones(batch_size, 1, device=attention_mask.device, dtype=attention_mask.dtype),
             attention_mask
         ], dim=1)
-        outputs = self.bert_mlm.bert(
+        outputs = self.bert_mlm(
             inputs_embeds=combined_embeds,
             attention_mask=expanded_mask,
             return_dict=True
         )
-        sequence_output = outputs.last_hidden_state
-        prediction_scores = self.bert_mlm.cls(sequence_output)
+        prediction_scores = outputs.logits
+
         if labels is not None:
             dummy_label = torch.full((batch_size, 1), -100, device=labels.device)
             shifted_labels = torch.cat([dummy_label, labels], dim=1)
