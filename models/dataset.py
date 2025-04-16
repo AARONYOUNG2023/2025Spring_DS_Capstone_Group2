@@ -2,7 +2,7 @@
 dataset.py
 
 Contains the SimpleChestXRayDataset for loading and transforming
-Chest X-ray images and their associated text fields.
+Chest‑X‑ray images *and already‑tokenised* text.
 """
 
 import torch
@@ -12,19 +12,37 @@ import torchvision.transforms as transforms
 
 class SimpleChestXRayDataset(Dataset):
     """
-    A PyTorch Dataset for chest X-ray images and associated text (findings/impression).
+    One item returns:
+        {
+            "image"        : 3×224×224 tensor,
+            "input_ids"    : Tensor[L]  (int64),
+            "attention_mask": Tensor[L] (int64),
+            "labels"       : Tensor[L]  (int64, copy of input_ids)
+        }
     """
 
-    def __init__(self, df):
+    def __init__(self, df, tokenizer, max_len: int = 512):
         """
-        :param df: A pandas DataFrame with columns like [image_path, findings, impression].
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            Must contain columns  [image_path, findings, impression].
+        tokenizer : transformers.PreTrainedTokenizer
+            The tokenizer that belongs to your text decoder
+            (e.g.  model.text_decoder.tokenizer).
+        max_len : int
+            Maximum token length (padded / truncated to this).
         """
-        self.df = df.reset_index(drop=True)
+        self.df        = df.reset_index(drop=True)
+        self.tokenizer = tokenizer
+        self.max_len   = max_len
+
         self.transform = transforms.Compose([
             transforms.Resize((224, 224)),
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                 std=[0.229, 0.224, 0.225])
+            transforms.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std =[0.229, 0.224, 0.225])
         ])
 
     def __len__(self):
@@ -32,17 +50,25 @@ class SimpleChestXRayDataset(Dataset):
 
     def __getitem__(self, idx):
         row = self.df.iloc[idx]
-        image_path = row["image_path"]
-        if image_path and isinstance(image_path, str):
-            image = Image.open(image_path).convert("RGB")
-        else:
+
+        # ---------- 1. image ----------
+        img_path = row["image_path"]
+        if isinstance(img_path, str):
+            image = Image.open(img_path).convert("RGB")
+        else:                                  # missing image fallback
             image = Image.new("RGB", (224, 224), color="black")
-
-
         image = self.transform(image)
-        text_input = (str(row["findings"]) + " " + str(row["impression"])).strip()
 
-        return {
-            "image": image,
-            "text": text_input
-        }
+        # ---------- 2. text → tokens (happens ONCE here) ----------
+        txt = f"{row['findings']} {row['impression']}".strip()
+        enc = self.tokenizer(
+            txt,
+            padding="max_length",
+            truncation=True,
+            max_length=self.max_len,
+            return_tensors="pt"
+        )
+        item = {k: v.squeeze(0) for k, v in enc.items()}  # drop batch dim
+        item["image"]  = image
+        item["labels"] = item["input_ids"].clone()        # for causal LM loss
+        return item
