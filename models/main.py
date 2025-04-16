@@ -1,43 +1,48 @@
-"""
-main.py
-
-Example script that:
-1. Loads the processed CSV dataset (master_dataset.csv).
-2. Builds a DataLoader using SimpleChestXRayDataset.
-3. Initializes the ChestXRayReportGenerator model.
-4. Demonstrates a single training batch (forward pass) and a simple generation example.
-"""
-
+import os
+import re
 import pandas as pd
 import torch
 from torch.utils.data import DataLoader
 from dataset import SimpleChestXRayDataset
 from combined_model import ChestXRayReportGenerator
 
+def clean_generated_text(text: str) -> str:
+    #
+    text = re.sub(r'\b(\w+)( \1\b)+', r'\1', text)
+    text = re.sub(r'([:.,])\1+', r'\1', text)
+    text = re.sub(r'[^\x00-\x7F]+', '', text)
+    text = ' '.join(text.split())
+    return text
+
 def main():
-    # -------------------------------------------------------------------------
-    # 1) Load the dataset
-    # -------------------------------------------------------------------------
-    csv_path = r"C:\Users\yangy\PycharmProjects\2025Spring_DS_Capstone_Group2\data\processed\master_dataset.csv"
+    csv_path = r"D:\S4Cap\pythonProject\master_dataset.csv"
     df = pd.read_csv(csv_path)
 
-    dataset = SimpleChestXRayDataset(df)
-    data_loader = DataLoader(dataset, batch_size=2, shuffle=False, num_workers=2)
+    df["image_path"] = df["image_path"].apply(
+        lambda p: p.replace(
+            "/home/ubuntu/DS_capstone/raw_dataset/test_data/NLMCXR_png",
+            r"D:\S4Cap\pythonProject\2025Spring_DS_Capstone_Group2\data\raw\NLMCXR_png"
+        ) if isinstance(p, str) else p
+    )
 
-    # -------------------------------------------------------------------------
-    # 2) Initialize the combined model
-    # -------------------------------------------------------------------------
+    dataset = SimpleChestXRayDataset(df)
+    data_loader = DataLoader(dataset, batch_size=16, shuffle=False, num_workers=2)
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = ChestXRayReportGenerator().to(device)
 
-    # -------------------------------------------------------------------------
-    # 3) Tokenizer for the text side (from the text_decoder inside our model)
-    # -------------------------------------------------------------------------
+    #
+    model_path = r"D:\S4Cap\pythonProject\finetuned_model.pth"
+    if os.path.exists(model_path):
+        model.load_state_dict(torch.load(model_path, map_location=device))
+        print(f"Loaded fine-tuned model from {model_path}")
+    else:
+        print("Using randomly initialized weights (no finetuned model found)")
+
+    model.eval()
     tokenizer = model.text_decoder.tokenizer
 
-    # -------------------------------------------------------------------------
-    # 4) Demonstrate one batch forward pass
-    # -------------------------------------------------------------------------
+    # Forward Pass（Loss）
     for batch in data_loader:
         images = batch["image"].to(device)
         texts = batch["text"]
@@ -46,7 +51,8 @@ def main():
             texts,
             padding=True,
             truncation=True,
-            return_tensors="pt"
+            return_tensors="pt",
+            max_length=512
         )
         input_ids = encoding["input_ids"].to(device)
         attention_mask = encoding["attention_mask"].to(device)
@@ -59,23 +65,28 @@ def main():
             labels=labels
         )
         loss = outputs["loss"]
-        print(f"Batch size: {images.size(0)} | Loss: {loss.item():.4f}")
+        print(f"Forward pass done. Batch size: {images.size(0)} | Loss: {loss.item():.4f}")
         break
 
-    # -------------------------------------------------------------------------
-    # 5) Demonstrate generation (batch_size=1 usage)
-    # -------------------------------------------------------------------------
-    model.eval()
-    single_sample = dataset[0]
-    single_image = single_sample["image"].unsqueeze(0).to(device)
-    prompt_text = "The chest X-ray reveals"
 
-    generated_report = model.generate_text(
-        images=single_image,
-        prompt_text=prompt_text,
-        num_mask_tokens=15
-    )
-    print("Generated (BERT-MLM style) text:\n", generated_report)
+    try:
+        single_sample = dataset[0]
+        single_image = single_sample["image"].unsqueeze(0).to(device)
+        prompt_text = "Findings:"
+        num_mask_tokens = 8
+
+        generated_report = model.generate_text(
+            images=single_image,
+            prompt_text=prompt_text,
+            num_mask_tokens=num_mask_tokens
+        )
+        cleaned_report = clean_generated_text(generated_report)
+
+        print("\nGenerated Report:")
+        print(cleaned_report)
+
+    except Exception as e:
+        print(f"Error during generation: {e}")
 
 if __name__ == "__main__":
     main()
