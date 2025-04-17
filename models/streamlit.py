@@ -108,7 +108,7 @@ if uploaded_file is not None:
                 )
 
             st.success("Report generated successfully!")
-            st.markdown("###Generated Report:")
+            st.markdown("Generated Report:")
             st.write(result)
 
             st.download_button(
