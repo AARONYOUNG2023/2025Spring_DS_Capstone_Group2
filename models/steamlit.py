@@ -22,7 +22,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.markdown('<div class="report-nav"><h1>🩺 Chest X‑ray Report Generator</h1></div>', unsafe_allow_html=True)
+st.markdown('<div class="report-nav"><h1>Chest X‑ray Report Generator</h1></div>', unsafe_allow_html=True)
 
 # ----------------------------------------------------------- #
 # Load model only once
@@ -86,4 +86,4 @@ if file:
     except Exception as err:
         st.error(f"Failed to process the image: {err}")
 else:
-    st.info("👈 Upload an X‑ray image to begin.")
+    st.info("Upload an X‑ray image to begin.")
