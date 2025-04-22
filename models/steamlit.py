@@ -63,7 +63,7 @@ if file:
         num_masks = st.slider("Mask tokens (length of completion)",
                               min_value=5, max_value=30, value=15)
 
-        if st.button("🔍 Generate report"):
+        if st.button("Generate report"):
             with st.spinner("Generating…"):
                 img_tensor = preprocess(img)
                 report = model.generate_text(
